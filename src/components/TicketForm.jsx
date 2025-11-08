@@ -1,15 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 
 export default function TicketForm({ ticket, onClose, onSaved, onOfflineSave }) {
-  const [form, setForm] = useState(
-    ticket || { name: "", price: "", description: "", is_active: 1 }
-  );
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    description: "",
+    is_active: 1,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 🧠 Saat prop `ticket` berubah (klik Edit), isi form dengan data tiket sekarang
+  useEffect(() => {
+    if (ticket) {
+      setForm({
+        name: ticket.name || "",
+        price: ticket.price || "",
+        description: ticket.description || "",
+        is_active: ticket.is_active ?? 1,
+      });
+    } else {
+      setForm({ name: "", price: "", description: "", is_active: 1 });
+    }
+  }, [ticket]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +61,7 @@ export default function TicketForm({ ticket, onClose, onSaved, onOfflineSave }) 
           headers: { Authorization: `Bearer ${token}` },
         });
       }
+
       onSaved();
       onClose();
     } catch (err) {

@@ -20,50 +20,63 @@ export default function TransactionForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Ambil daftar tiket untuk dropdown
+  // 🟩 Ambil daftar tiket untuk dropdown
   useEffect(() => {
     const token = getToken();
     api
       .get("/tickets", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setTickets(res.data.data))
-      .catch(() => console.error("Gagal memuat daftar tiket"));
+      .catch(() => console.error("⚠️ Gagal memuat daftar tiket"));
   }, []);
 
-  // 🔹 Isi form jika sedang edit
+  // 🟩 Isi form kalau sedang edit transaksi
   useEffect(() => {
-    if (transaction) setForm(transaction);
+    if (transaction) {
+      setForm({
+        ticket_id: transaction.ticket_id || "",
+        buyer_name: transaction.buyer_name || "",
+        quantity: transaction.quantity || "",
+        status: transaction.status || "pending",
+      });
+    } else {
+      setForm({
+        ticket_id: "",
+        buyer_name: "",
+        quantity: "",
+        status: "pending",
+      });
+    }
   }, [transaction]);
 
-  // 🔹 Input handler
+  // 🟩 Input handler
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Submit handler
+  // 🟩 Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Validasi sederhana
     if (!form.ticket_id || !form.buyer_name || !form.quantity) {
       setError("Semua field wajib diisi.");
       return;
     }
 
     setLoading(true);
+    const token = getToken();
 
     try {
-      const token = getToken();
-
-      // Jika offline, simpan lokal
+      // Offline mode
       if (!navigator.onLine) {
         onOfflineSave?.(form);
-        alert("💾 Tidak ada koneksi. Transaksi disimpan secara offline.");
+        alert("💾 Tidak ada koneksi. Transaksi disimpan offline.");
         onClose();
         return;
       }
 
-      // Jika online, kirim langsung ke server
+      // Online mode
       if (transaction) {
         await api.put(`/transactions/${transaction.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
@@ -74,31 +87,34 @@ export default function TransactionForm({
         });
       }
 
-      onSaved();
+      onSaved?.();
       onClose();
     } catch (err) {
-      console.error("❌ Error saat menyimpan transaksi:", err);
+      console.error("❌ Gagal menyimpan transaksi:", err);
 
-      // Jika error karena network, simpan offline
       if (!navigator.onLine) {
         onOfflineSave?.(form);
         alert("⚠️ Koneksi terputus. Data disimpan offline.");
       } else {
-        setError("Gagal menyimpan transaksi. Periksa data Anda.");
+        const message =
+          err?.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan transaksi.";
+        setError(message);
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // 🧱 UI
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <form
         onSubmit={handleSubmit}
         className="bg-white w-full max-w-md p-6 rounded-lg shadow"
       >
-        <h2 className="text-xl font-bold mb-4 text-green-700">
-          {transaction ? "Edit Transaksi" : "Tambah Transaksi"}
+        <h2 className="text-xl font-bold mb-4 text-green-700 text-center">
+          {transaction ? "✏️ Edit Transaksi" : "➕ Tambah Transaksi"}
         </h2>
 
         {error && (
@@ -107,7 +123,7 @@ export default function TransactionForm({
           </div>
         )}
 
-        {/* Pilihan tiket */}
+        {/* Tiket */}
         <label className="block mb-2">
           <span className="text-sm font-medium">Pilih Tiket</span>
           <select
@@ -137,7 +153,7 @@ export default function TransactionForm({
           />
         </label>
 
-        {/* Jumlah tiket */}
+        {/* Jumlah */}
         <label className="block mb-2">
           <span className="text-sm font-medium">Jumlah Tiket</span>
           <input
