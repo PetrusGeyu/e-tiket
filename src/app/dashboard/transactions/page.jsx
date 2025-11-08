@@ -64,33 +64,62 @@ export default function TransactionPage() {
   };
 
   // 🔹 Export ke Excel
-  const handleExportExcel = async () => {
-    try {
-      const token = getToken();
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
+  // const handleExportExcel = async () => {
+  //   try {
+  //     const token = getToken();
+  //     const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  //     const response = await fetch(url, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-      if (!response.ok) throw new Error("Gagal mengekspor data.");
+  //     if (!response.ok) throw new Error("Gagal mengekspor data.");
 
-      // Buat file Blob untuk diunduh
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `data_transaksi_${new Date().toISOString().slice(0, 19)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch (err) {
-      console.error(err);
-      alert("❌ Terjadi kesalahan saat export Excel");
-    }
-  };
+  //     // Buat file Blob untuk diunduh
+  //     const blob = await response.blob();
+  //     const blobUrl = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = blobUrl;
+  //     a.download = `data_transaksi_${new Date().toISOString().slice(0, 19)}.xlsx`;
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     a.remove();
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("❌ Terjadi kesalahan saat export Excel");
+  //   }
+  // };
+const handleExportExcel = async () => {
+  try {
+    const token = getToken();
+    const url = "/api/transactions/export/excel"; // relative path
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error("Gagal mengekspor data.");
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `data_transaksi_${new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/[:T]/g, "-")}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl); // hapus blob setelah digunakan
+  } catch (err) {
+    console.error(err);
+    alert("❌ Terjadi kesalahan saat export Excel");
+  }
+};
 
   return (
     <div className="p-6">
