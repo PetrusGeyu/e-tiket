@@ -45,7 +45,7 @@ export default function Sidebar() {
     >
       {/* Header */}
       <div className="p-6 text-2xl font-bold border-b border-green-600 flex items-center gap-2">
-        🎫 <span>Fenya E-Ticket</span>
+        🎫 <span>E-Ticket</span>
       </div>
 
       {/* Navigasi */}
