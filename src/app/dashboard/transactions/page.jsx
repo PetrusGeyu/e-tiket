@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
+import { saveOfflineTransaction, syncOfflineTransactions } from "@/lib/sync";
 import TransactionForm from "@/components/TransactionForm";
 
 export default function TransactionsPage() {
@@ -11,6 +12,7 @@ export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
+  // Ambil transaksi dari server
   const fetchTransactions = async () => {
     try {
       const token = getToken();
@@ -27,20 +29,20 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
+
+    // Jalankan sinkronisasi otomatis jika online
+    if (navigator.onLine) {
+      syncOfflineTransactions();
+    }
+
+    // Deteksi perubahan status koneksi
+    window.addEventListener("online", syncOfflineTransactions);
+    return () => window.removeEventListener("online", syncOfflineTransactions);
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Yakin ingin menghapus transaksi ini?")) return;
-    try {
-      const token = getToken();
-      await api.delete(`/transactions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchTransactions();
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menghapus transaksi");
-    }
+  const handleOfflineAdd = (transaction) => {
+    saveOfflineTransaction(transaction);
+    alert("💾 Tidak ada koneksi. Transaksi disimpan offline.");
   };
 
   return (
@@ -67,11 +69,10 @@ export default function TransactionsPage() {
             <tr>
               <th className="p-3 border">#</th>
               <th className="p-3 border">Nama Tiket</th>
-              <th className="p-3 border">Nama Pembeli</th>
+              <th className="p-3 border">Pembeli</th>
               <th className="p-3 border">Jumlah</th>
-              <th className="p-3 border">Total Harga</th>
+              <th className="p-3 border">Total</th>
               <th className="p-3 border">Status</th>
-              <th className="p-3 border">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -82,36 +83,7 @@ export default function TransactionsPage() {
                 <td className="border p-2">{t.buyer_name}</td>
                 <td className="border p-2">{t.quantity}</td>
                 <td className="border p-2">Rp {t.total_price}</td>
-                <td className="border p-2">
-                  <span
-                    className={`px-2 py-1 rounded text-sm ${
-                      t.status === "paid"
-                        ? "bg-green-200 text-green-700"
-                        : t.status === "pending"
-                        ? "bg-yellow-200 text-yellow-700"
-                        : "bg-red-200 text-red-700"
-                    }`}
-                  >
-                    {t.status}
-                  </span>
-                </td>
-                <td className="border p-2 space-x-2">
-                  <button
-                    onClick={() => {
-                      setSelectedTransaction(t);
-                      setShowForm(true);
-                    }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(t.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Hapus
-                  </button>
-                </td>
+                <td className="border p-2">{t.status}</td>
               </tr>
             ))}
           </tbody>
@@ -123,6 +95,7 @@ export default function TransactionsPage() {
           transaction={selectedTransaction}
           onClose={() => setShowForm(false)}
           onSaved={fetchTransactions}
+          onOfflineSave={handleOfflineAdd} // 🔥 simpan offline
         />
       )}
     </div>

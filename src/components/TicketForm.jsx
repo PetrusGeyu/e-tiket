@@ -4,7 +4,7 @@ import { useState } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 
-export default function TicketForm({ ticket, onClose, onSaved }) {
+export default function TicketForm({ ticket, onClose, onSaved, onOfflineSave }) {
   const [form, setForm] = useState(
     ticket || { name: "", price: "", description: "", is_active: 1 }
   );
@@ -24,9 +24,17 @@ export default function TicketForm({ ticket, onClose, onSaved }) {
       return setError("Semua field wajib diisi.");
     }
 
+    setLoading(true);
+    const token = getToken();
+
     try {
-      setLoading(true);
-      const token = getToken();
+      if (!navigator.onLine) {
+        onOfflineSave?.(form);
+        alert("💾 Tidak ada koneksi. Tiket disimpan offline.");
+        onClose();
+        return;
+      }
+
       if (ticket) {
         await api.put(`/tickets/${ticket.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
@@ -39,18 +47,19 @@ export default function TicketForm({ ticket, onClose, onSaved }) {
       onSaved();
       onClose();
     } catch (err) {
-      console.error(err);
-      setError(
-        err?.response?.data?.message ||
-          "Gagal menyimpan tiket. Periksa input Anda."
-      );
+      console.warn("❌ Gagal menyimpan tiket:", err);
+      if (!navigator.onLine) {
+        onOfflineSave?.(form);
+      } else {
+        setError("Gagal menyimpan tiket. Periksa koneksi Anda.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <form
         onSubmit={handleSubmit}
         className="bg-white w-full max-w-md p-6 rounded-lg shadow"
@@ -72,7 +81,7 @@ export default function TicketForm({ ticket, onClose, onSaved }) {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="mt-1 block w-full border rounded px-3 py-2"
           />
         </label>
 
@@ -83,7 +92,7 @@ export default function TicketForm({ ticket, onClose, onSaved }) {
             name="price"
             value={form.price}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="mt-1 block w-full border rounded px-3 py-2"
           />
         </label>
 
@@ -93,7 +102,7 @@ export default function TicketForm({ ticket, onClose, onSaved }) {
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="mt-1 block w-full border rounded px-3 py-2"
           ></textarea>
         </label>
 

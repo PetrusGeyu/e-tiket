@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 import TicketForm from "@/components/TicketForm";
+import {
+  saveOfflineTicket,
+  syncOfflineTickets,
+} from "@/lib/sync";
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
@@ -11,7 +15,6 @@ export default function TicketsPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  // Ambil daftar tiket dari backend
   const fetchTickets = async () => {
     try {
       const token = getToken();
@@ -20,7 +23,10 @@ export default function TicketsPage() {
       });
       setTickets(res.data.data);
     } catch (err) {
-      console.error("Gagal memuat tiket:", err);
+      console.warn("⚠️ Tidak bisa ambil tiket dari server, gunakan data lokal.");
+      const localTickets =
+        JSON.parse(localStorage.getItem("offline_tickets")) || [];
+      setTickets(localTickets);
     } finally {
       setLoading(false);
     }
@@ -28,11 +34,18 @@ export default function TicketsPage() {
 
   useEffect(() => {
     fetchTickets();
+
+    if (navigator.onLine) {
+      syncOfflineTickets();
+    }
+
+    window.addEventListener("online", syncOfflineTickets);
+    return () => window.removeEventListener("online", syncOfflineTickets);
   }, []);
 
-  // Hapus tiket
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus tiket ini?")) return;
+
     try {
       const token = getToken();
       await api.delete(`/tickets/${id}`, {
@@ -40,9 +53,13 @@ export default function TicketsPage() {
       });
       fetchTickets();
     } catch (err) {
-      console.error("Gagal menghapus tiket:", err);
-      alert("Gagal menghapus tiket");
+      alert("❌ Gagal menghapus tiket (mungkin offline)");
     }
+  };
+
+  const handleOfflineSave = (ticket) => {
+    saveOfflineTicket(ticket);
+    alert("💾 Tiket disimpan secara offline. Akan disinkronkan otomatis nanti.");
   };
 
   return (
@@ -76,7 +93,7 @@ export default function TicketsPage() {
           </thead>
           <tbody>
             {tickets.map((ticket, index) => (
-              <tr key={ticket.id} className="text-center">
+              <tr key={ticket.id || index} className="text-center">
                 <td className="border p-2">{index + 1}</td>
                 <td className="border p-2">{ticket.name}</td>
                 <td className="border p-2">Rp {ticket.price}</td>
@@ -115,6 +132,7 @@ export default function TicketsPage() {
           ticket={selectedTicket}
           onClose={() => setShowForm(false)}
           onSaved={fetchTickets}
+          onOfflineSave={handleOfflineSave}
         />
       )}
     </div>
