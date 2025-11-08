@@ -79,6 +79,14 @@ export default function TicketsPage() {
         </button>
       </div>
 
+      {/* 🔸 Keterangan Weekend */}
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-sm">
+        ⚠️ <span className="font-semibold">Catatan:</span> Harga tiket akan otomatis
+        <span className="font-semibold"> naik 20%</span> pada hari
+        <span className="font-semibold"> Sabtu</span> dan
+        <span className="font-semibold"> Minggu</span> (weekend).
+      </div>
+
       {/* Tabel */}
       <div className="overflow-x-auto bg-white shadow rounded-lg border border-gray-100">
         {loading ? (
