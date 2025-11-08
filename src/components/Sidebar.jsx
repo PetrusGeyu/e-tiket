@@ -4,13 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getToken, removeToken } from "@/utils/auth";
 import { useEffect } from "react";
-import { LogOut, LayoutDashboard, Ticket, Users, FileText, ShoppingCart } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  Ticket,
+  Users,
+  FileText,
+  ShoppingCart,
+} from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Navigasi
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
     { name: "Tiket", href: "/dashboard/tickets", icon: <Ticket size={18} /> },
@@ -19,27 +25,33 @@ export default function Sidebar() {
     { name: "Laporan", href: "/dashboard/reports", icon: <FileText size={18} /> },
   ];
 
-  // Logout handler
   const handleLogout = () => {
     removeToken();
     router.push("/auth/login");
   };
 
-  // Cek token login
   useEffect(() => {
     const token = getToken();
     if (!token) router.push("/auth/login");
   }, [router]);
 
   return (
-    <aside className="w-64 h-screen bg-green-700 text-white flex flex-col shadow-lg">
+    <aside
+      className="
+        fixed top-0 left-0
+        w-64 h-screen
+        bg-green-700 text-white
+        flex flex-col justify-between
+        shadow-xl z-50
+      "
+    >
       {/* Header */}
       <div className="p-6 text-2xl font-bold border-b border-green-600 flex items-center gap-2">
         🎫 <span>Fenya E-Ticket</span>
       </div>
 
       {/* Navigasi */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
@@ -59,7 +71,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer (Logout) */}
+      {/* Footer */}
       <div className="p-4 border-t border-green-600">
         <button
           onClick={handleLogout}

@@ -20,7 +20,7 @@ export default function TransactionForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🟩 Ambil daftar tiket untuk dropdown
+  // 🔹 Ambil daftar tiket
   useEffect(() => {
     const token = getToken();
     api
@@ -29,11 +29,14 @@ export default function TransactionForm({
       .catch(() => console.error("⚠️ Gagal memuat daftar tiket"));
   }, []);
 
-  // 🟩 Isi form kalau sedang edit transaksi
+  // 🔹 Isi form jika edit transaksi
   useEffect(() => {
     if (transaction) {
       setForm({
-        ticket_id: transaction.ticket_id || "",
+        ticket_id:
+          transaction.ticket_id ||
+          tickets.find((t) => t.name === transaction.ticket_name)?.id ||
+          "",
         buyer_name: transaction.buyer_name || "",
         quantity: transaction.quantity || "",
         status: transaction.status || "pending",
@@ -46,15 +49,15 @@ export default function TransactionForm({
         status: "pending",
       });
     }
-  }, [transaction]);
+  }, [transaction, tickets]);
 
-  // 🟩 Input handler
+  // 🔹 Input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🟩 Submit handler
+  // 🔹 Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -64,11 +67,11 @@ export default function TransactionForm({
       return;
     }
 
+    console.log("📦 Data dikirim:", form);
     setLoading(true);
     const token = getToken();
 
     try {
-      // Offline mode
       if (!navigator.onLine) {
         onOfflineSave?.(form);
         alert("💾 Tidak ada koneksi. Transaksi disimpan offline.");
@@ -76,7 +79,6 @@ export default function TransactionForm({
         return;
       }
 
-      // Online mode
       if (transaction) {
         await api.put(`/transactions/${transaction.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
@@ -91,15 +93,14 @@ export default function TransactionForm({
       onClose();
     } catch (err) {
       console.error("❌ Gagal menyimpan transaksi:", err);
-
       if (!navigator.onLine) {
         onOfflineSave?.(form);
         alert("⚠️ Koneksi terputus. Data disimpan offline.");
       } else {
-        const message =
+        setError(
           err?.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan transaksi.";
-        setError(message);
+            "Terjadi kesalahan saat menyimpan transaksi."
+        );
       }
     } finally {
       setLoading(false);
