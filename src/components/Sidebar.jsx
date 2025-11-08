@@ -12,6 +12,7 @@ export default function Sidebar() {
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "Tiket", href: "/dashboard/tickets" },
+     {name: "Transaksi", href: "/dashboard/transactions"},
     { name: "Pengunjung", href: "/dashboard/visitors" },
     { name: "Laporan", href: "/dashboard/reports" },
   ];
