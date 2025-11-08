@@ -63,6 +63,35 @@ export default function TransactionPage() {
     }
   };
 
+  // 🔹 Export ke Excel
+  const handleExportExcel = async () => {
+    try {
+      const token = getToken();
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Gagal mengekspor data.");
+
+      // Buat file Blob untuk diunduh
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `data_transaksi_${new Date().toISOString().slice(0, 19)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error(err);
+      alert("❌ Terjadi kesalahan saat export Excel");
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -70,12 +99,24 @@ export default function TransactionPage() {
         <h1 className="text-2xl font-bold text-green-700">
           🧾 Manajemen Transaksi
         </h1>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
-        >
-          + Tambah Transaksi
-        </button>
+
+        <div className="flex gap-3">
+          {/* Tombol Export */}
+          <button
+            onClick={handleExportExcel}
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow flex items-center gap-2"
+          >
+            📊 Export Excel
+          </button>
+
+          {/* Tombol Tambah */}
+          <button
+            onClick={handleAdd}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
+          >
+            + Tambah Transaksi
+          </button>
+        </div>
       </div>
 
       {/* Tabel Transaksi */}

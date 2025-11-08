@@ -21,7 +21,6 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
     { name: "Tiket", href: "/dashboard/tickets", icon: <Ticket size={18} /> },
     { name: "Transaksi", href: "/dashboard/transactions", icon: <ShoppingCart size={18} /> },
-    { name: "Laporan", href: "/dashboard/reports", icon: <FileText size={18} /> },
   ];
 
   const handleLogout = () => {
