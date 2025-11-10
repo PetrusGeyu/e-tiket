@@ -94,7 +94,7 @@ export default function TransactionPage() {
  const handleExportExcel = async () => {
   try {
     const token = getToken();
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`; // ✅ pastikan ini benar
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -120,7 +120,6 @@ export default function TransactionPage() {
     alert("❌ Terjadi kesalahan saat export Excel");
   }
 };
-
 
   return (
     <div className="p-6">
