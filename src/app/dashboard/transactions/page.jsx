@@ -19,24 +19,26 @@ export default function TransactionPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = res.data.data || [];
+      const allTransactions = res.data.data || [];
 
-      // 🔹 Ambil daftar tiket aktif dari localStorage (cache)
-      const activeTickets =
-        JSON.parse(localStorage.getItem("tickets_cache"))?.filter(
-          (t) => t.is_active === 1 || t.is_active === true
-        ) || [];
+      // 🔹 Ambil tiket aktif dari cache
+      const ticketsCache =
+        JSON.parse(localStorage.getItem("tickets_cache")) || [];
+      const activeTickets = ticketsCache.filter(
+        (t) => t.is_active === 1 || t.is_active === true
+      );
 
-      // 🔹 Filter transaksi agar hanya yang tiketnya aktif
-      const filteredTransactions = data.filter((t) =>
+      // 🔹 Filter transaksi agar hanya tiket aktif yang muncul
+      const filteredTransactions = allTransactions.filter((t) =>
         activeTickets.some(
-          (ticket) => ticket.name === t.ticket_name || ticket.id === t.ticket_id
+          (ticket) =>
+            ticket.id === t.ticket_id || ticket.name === t.ticket_name
         )
       );
 
       setTransactions(filteredTransactions);
     } catch (err) {
-      console.error("Gagal memuat transaksi:", err);
+      console.error("⚠️ Gagal memuat transaksi:", err);
     }
   };
 
@@ -147,6 +149,7 @@ export default function TransactionPage() {
               <th className="px-4 py-2 text-left font-medium">Tiket</th>
               <th className="px-4 py-2 text-center font-medium">Jumlah</th>
               <th className="px-4 py-2 text-center font-medium">Status</th>
+              <th className="px-4 py-2 text-center font-medium">Total</th>
               <th className="px-4 py-2 text-center font-medium">Tanggal</th>
               <th className="px-4 py-2 text-center font-medium">Aksi</th>
             </tr>
@@ -175,6 +178,12 @@ export default function TransactionPage() {
                       {t.status}
                     </span>
                   </td>
+                  <td className="px-4 py-2 text-center font-semibold text-gray-800">
+                    Rp{" "}
+                    {Number(t.total_price || t.quantity * t.ticket_price || 0).toLocaleString(
+                      "id-ID"
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-center">
                     {new Date(t.visit_date).toLocaleDateString("id-ID")}
                   </td>
@@ -197,7 +206,7 @@ export default function TransactionPage() {
             ) : (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="8"
                   className="text-center py-6 text-gray-500 italic"
                 >
                   Tidak ada transaksi untuk tiket aktif.
