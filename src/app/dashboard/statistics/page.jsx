@@ -47,7 +47,7 @@ export default function StatisticPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-green-700 mb-6">📊 Dashboard</h1>
+      <h1 className="text-2xl font-bold text-green-700 mb-6">📊 Statistik</h1>
 
       {/* Statistik Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
