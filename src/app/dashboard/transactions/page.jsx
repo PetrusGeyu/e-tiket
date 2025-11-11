@@ -153,7 +153,6 @@ export default function TransactionPage() {
               <th className="px-4 py-2 text-left font-medium">Nama Pembeli</th>
               <th className="px-4 py-2 text-left font-medium">Tiket</th>
               <th className="px-4 py-2 text-center font-medium">Jumlah</th>
-              <th className="px-4 py-2 text-center font-medium">Status</th>
               <th className="px-4 py-2 text-center font-medium">Total</th>
               <th className="px-4 py-2 text-center font-medium">Tanggal</th>
               <th className="px-4 py-2 text-center font-medium">Aksi</th>
