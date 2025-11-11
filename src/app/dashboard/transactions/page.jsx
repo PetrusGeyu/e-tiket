@@ -21,20 +21,25 @@ export default function TransactionPage() {
 
       const allTransactions = res.data.data || [];
 
-      // 🔹 Ambil tiket aktif dari cache
-      const ticketsCache =
-        JSON.parse(localStorage.getItem("tickets_cache")) || [];
-      const activeTickets = ticketsCache.filter(
+      // 🔹 Ambil tiket aktif dari cache (kalau ada)
+      const cachedTickets = JSON.parse(localStorage.getItem("tickets_cache")) || [];
+
+      const activeTickets = cachedTickets.filter(
         (t) => t.is_active === 1 || t.is_active === true
       );
 
-      // 🔹 Filter transaksi agar hanya tiket aktif yang muncul
-      const filteredTransactions = allTransactions.filter((t) =>
-        activeTickets.some(
-          (ticket) =>
-            ticket.id === t.ticket_id || ticket.name === t.ticket_name
-        )
-      );
+      // 🔹 Filter transaksi: tampilkan hanya transaksi tiket aktif (jika ada tiket aktif)
+      const filteredTransactions =
+        activeTickets.length > 0
+          ? allTransactions.filter((t) =>
+              activeTickets.some(
+                (ticket) =>
+                  ticket.id === t.ticket_id ||
+                  ticket.name?.trim().toLowerCase() ===
+                    t.ticket_name?.trim().toLowerCase()
+              )
+            )
+          : allTransactions;
 
       setTransactions(filteredTransactions);
     } catch (err) {
@@ -180,9 +185,11 @@ export default function TransactionPage() {
                   </td>
                   <td className="px-4 py-2 text-center font-semibold text-gray-800">
                     Rp{" "}
-                    {Number(t.total_price || t.quantity * t.ticket_price || 0).toLocaleString(
-                      "id-ID"
-                    )}
+                    {Number(
+                      t.total_price ||
+                        t.quantity * t.ticket_price ||
+                        0
+                    ).toLocaleString("id-ID")}
                   </td>
                   <td className="px-4 py-2 text-center">
                     {new Date(t.visit_date).toLocaleDateString("id-ID")}
