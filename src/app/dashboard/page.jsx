@@ -1,111 +1,96 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import api from "@/lib/api";
-import { getToken } from "@/utils/auth";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchStatistics = async () => {
-    try {
-      const token = getToken();
-      const res = await api.get("/statistics", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStats(res.data.data);
-    } catch (err) {
-      console.error("Gagal memuat statistik:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
-
-  if (loading) {
-    return <p className="text-gray-600">📊 Memuat statistik...</p>;
-  }
-
-  if (!stats) {
-    return <p className="text-red-500">❌ Tidak dapat memuat data statistik.</p>;
-  }
-
-  const { visitors, revenue } = stats;
-
-  // Siapkan data untuk grafik bar
-  const chartData = [
-    { name: "Hari Ini", visitors: visitors.today, revenue: revenue.today },
-    { name: "Minggu Ini", visitors: visitors.week, revenue: revenue.week },
-    { name: "Bulan Ini", visitors: visitors.month, revenue: revenue.month },
-    { name: "Tahun Ini", visitors: visitors.year, revenue: revenue.year },
-  ];
-
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-green-700 mb-6">📊 Dashboard</h1>
+    <main className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow p-6">
+        {/* Header */}
+        <h1 className="text-3xl font-bold text-green-700 mb-4 text-center">
+          🌳 Taman Hutan Raya Lapak Jaru
+        </h1>
 
-      {/* Statistik Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <StatCard
-          title="Pengunjung Hari Ini"
-          value={visitors.today}
-          color="bg-green-500"
-        />
-        <StatCard
-          title="Pengunjung Bulan Ini"
-          value={visitors.month}
-          color="bg-blue-500"
-        />
-        <StatCard
-          title="Total Pendapatan Tahun Ini"
-          value={`Rp ${revenue.year.toLocaleString()}`}
-          color="bg-yellow-500"
-        />
-      </div>
+        {/* Foto */}
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/lapakjaru.jpg" // ← simpan gambar ini di public/lapakjaru.jpg
+            alt="Taman Hutan Raya Lapak Jaru"
+            width={800}
+            height={400}
+            className="rounded-xl shadow-lg object-cover"
+          />
+        </div>
 
-      {/* Grafik */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-4 text-green-700">
-          Grafik Pengunjung & Pendapatan
+        {/* Deskripsi */}
+        <p className="text-gray-700 leading-relaxed mb-4">
+          <strong>TAHURA (Taman Hutan Raya) Lapak Jaru</strong> adalah satu-satunya taman
+          hutan raya yang berlokasi di Kabupaten Gunung Mas, Kalimantan Tengah.
+          Kawasan ini dikenal sebagai destinasi wisata unggulan daerah yang menonjolkan
+          keindahan alam yang masih sangat alami dan terjaga.
+        </p>
+
+        <h2 className="text-2xl font-semibold text-green-700 mt-6 mb-3">📍 Detail Lokasi</h2>
+        <ul className="text-gray-700 space-y-2">
+          <li><strong>Nama:</strong> TAHURA LAPAK JARU KABUPATEN GUNUNG MAS</li>
+          <li>
+            <strong>Alamat:</strong> Jln. Bawi Kameloh, Kuala Kurun, Kec. Kurun, Kabupaten Gunung MAS, Kalimantan Tengah 74511
+          </li>
+          <li><strong>Rating:</strong> ⭐ 4.2 / 5.0</li>
+          <li><strong>Jam Buka:</strong> Setiap hari (09.00 - 16.00)</li>
+          <li>
+            <strong>Tautan Peta:</strong>{" "}
+            <a
+              href="https://www.google.com/maps?q=Tahura+Lapak+Jaru+Gunung+Mas"
+              target="_blank"
+              className="text-blue-600 underline"
+            >
+              Lihat di Google Maps
+            </a>
+          </li>
+        </ul>
+
+        <h2 className="text-2xl font-semibold text-green-700 mt-8 mb-3">
+          🌲 Profil & Potensi Kawasan
         </h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="visitors" fill="#16a34a" name="Pengunjung" />
-            <Bar dataKey="revenue" fill="#facc15" name="Pendapatan" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+        <p className="text-gray-700 mb-3">
+          TAHURA Lapak Jaru memiliki luas sekitar <strong>4.119 hektar</strong> dan ditetapkan
+          melalui Keputusan Menteri Lingkungan Hidup dan Kehutanan. Kawasan ini memiliki
+          potensi luar biasa, meliputi:
+        </p>
 
-      {/* Statistik Tambahan */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-        <StatCard
-          title="Pengunjung Weekday"
-          value={visitors.weekday}
-          color="bg-teal-500"
-        />
-        <StatCard
-          title="Pengunjung Weekend"
-          value={visitors.weekend}
-          color="bg-pink-500"
-        />
-      </div>
-    </div>
-  );
-}
+        <ul className="list-disc list-inside text-gray-700 space-y-2 mb-4">
+          <li><strong>Keindahan Alam:</strong> Flora dan fauna yang masih terjaga dan alami.</li>
+          <li><strong>Potensi Wisata:</strong> Objek wisata alam dengan keindahan dan keutuhan sumber daya.</li>
+          <li><strong>Pengembangan:</strong> Fokus pada pengelolaan optimal dan visi “SMART TOURISM”.</li>
+        </ul>
 
-function StatCard({ title, value, color }) {
-  return (
-    <div className={`p-5 rounded-lg shadow-md text-white ${color}`}>
-      <p className="text-sm opacity-90">{title}</p>
-      <h3 className="text-2xl font-bold mt-1">{value}</h3>
-    </div>
+        <p className="text-gray-700 mb-4">
+          Kawasan ini dibuka kembali pada awal tahun 2022 dan terus dikembangkan
+          sebagai destinasi <em>ekowisata</em> serta kawasan konservasi unggulan di Kalimantan Tengah.
+        </p>
+
+        <h2 className="text-2xl font-semibold text-green-700 mt-8 mb-3">
+          💡 Alasan E-Ticket Diciptakan
+        </h2>
+        <p className="text-gray-700 leading-relaxed">
+          E-Ticket Lapak Jaru diciptakan untuk mendukung visi <strong>“Smart Tourism”</strong> dengan
+          tujuan mempermudah pengunjung dalam proses pemesanan tiket, meningkatkan efisiensi
+          pengelolaan data wisata, dan mendorong digitalisasi layanan publik di kawasan
+          <strong> TAHURA Lapak Jaru</strong>. Dengan sistem ini, wisatawan tetap bisa memesan tiket
+          bahkan tanpa koneksi internet (offline mode).
+        </p>
+
+        {/* Tombol ke Statistik */}
+        <div className="text-center mt-8">
+          <Link
+            href="/statistics"
+            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
+          >
+            📊 Lihat Statistik
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

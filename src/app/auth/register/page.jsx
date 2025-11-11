@@ -88,7 +88,7 @@ export default function RegisterPage() {
         className="w-full max-w-md bg-white p-6 rounded-lg shadow"
       >
         <h1 className="text-2xl font-bold mb-4 text-center text-green-600">
-          Daftar Akun Fenya
+          Digital Lapak Jaru
         </h1>
 
         {error && (

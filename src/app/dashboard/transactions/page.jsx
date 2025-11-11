@@ -18,7 +18,23 @@ export default function TransactionPage() {
       const res = await api.get("/transactions", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTransactions(res.data.data || []);
+
+      const data = res.data.data || [];
+
+      // 🔹 Ambil daftar tiket aktif dari localStorage (cache)
+      const activeTickets =
+        JSON.parse(localStorage.getItem("tickets_cache"))?.filter(
+          (t) => t.is_active === 1 || t.is_active === true
+        ) || [];
+
+      // 🔹 Filter transaksi agar hanya yang tiketnya aktif
+      const filteredTransactions = data.filter((t) =>
+        activeTickets.some(
+          (ticket) => ticket.name === t.ticket_name || ticket.id === t.ticket_id
+        )
+      );
+
+      setTransactions(filteredTransactions);
     } catch (err) {
       console.error("Gagal memuat transaksi:", err);
     }
@@ -64,62 +80,35 @@ export default function TransactionPage() {
   };
 
   // 🔹 Export ke Excel
-  // const handleExportExcel = async () => {
-  //   try {
-  //     const token = getToken();
-  //     const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
+  const handleExportExcel = async () => {
+    try {
+      const token = getToken();
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
 
-  //     const response = await fetch(url, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  //     if (!response.ok) throw new Error("Gagal mengekspor data.");
+      if (!response.ok) throw new Error("Gagal mengekspor data.");
 
-  //     // Buat file Blob untuk diunduh
-  //     const blob = await response.blob();
-  //     const blobUrl = window.URL.createObjectURL(blob);
-  //     const a = document.createElement("a");
-  //     a.href = blobUrl;
-  //     a.download = `data_transaksi_${new Date().toISOString().slice(0, 19)}.xlsx`;
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("❌ Terjadi kesalahan saat export Excel");
-  //   }
-  // };
- const handleExportExcel = async () => {
-  try {
-    const token = getToken();
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`; // ✅ pastikan ini benar
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) throw new Error("Gagal mengekspor data.");
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `data_transaksi_${new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace(/[:T]/g, "-")}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    console.error(err);
-    alert("❌ Terjadi kesalahan saat export Excel");
-  }
-};
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `data_transaksi_${new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-")}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      alert("❌ Terjadi kesalahan saat export Excel");
+    }
+  };
 
   return (
     <div className="p-6">
@@ -211,7 +200,7 @@ export default function TransactionPage() {
                   colSpan="7"
                   className="text-center py-6 text-gray-500 italic"
                 >
-                  Belum ada transaksi.
+                  Tidak ada transaksi untuk tiket aktif.
                 </td>
               </tr>
             )}

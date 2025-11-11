@@ -8,8 +8,7 @@ import {
   LogOut,
   LayoutDashboard,
   Ticket,
-  Users,
-  FileText,
+  FileBarChart2,
   ShoppingCart,
 } from "lucide-react";
 
@@ -17,17 +16,37 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // 🔹 Navigasi utama
   const navLinks = [
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
-    { name: "Tiket", href: "/dashboard/tickets", icon: <Ticket size={18} /> },
-    { name: "Transaksi", href: "/dashboard/transactions", icon: <ShoppingCart size={18} /> },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: <LayoutDashboard size={18} />,
+    },
+    {
+      name: "Tiket",
+      href: "/dashboard/tickets",
+      icon: <Ticket size={18} />,
+    },
+    {
+      name: "Statistik",
+      href: "/dashboard/statistics",
+      icon: <FileBarChart2 size={18} />,
+    },
+    {
+      name: "Transaksi",
+      href: "/dashboard/transactions",
+      icon: <ShoppingCart size={18} />,
+    },
   ];
 
+  // 🔹 Logout handler
   const handleLogout = () => {
     removeToken();
     router.push("/auth/login");
   };
 
+  // 🔹 Cek token saat pertama kali load
   useEffect(() => {
     const token = getToken();
     if (!token) router.push("/auth/login");
@@ -40,7 +59,7 @@ export default function Sidebar() {
         w-64 h-screen
         bg-green-700 text-white
         flex flex-col justify-between
-        shadow-xl z-50
+        shadow-lg z-50
       "
     >
       {/* Header */}
@@ -51,11 +70,14 @@ export default function Sidebar() {
       {/* Navigasi */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {navLinks.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive =
+            pathname === link.href || pathname.startsWith(link.href + "/");
           return (
             <Link
               key={link.name}
               href={link.href}
+              aria-label={link.name}
+              title={link.name}
               className={`flex items-center gap-3 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-green-500 text-white shadow-inner"
@@ -63,7 +85,7 @@ export default function Sidebar() {
               }`}
             >
               {link.icon}
-              {link.name}
+              <span>{link.name}</span>
             </Link>
           );
         })}
