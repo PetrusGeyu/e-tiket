@@ -14,7 +14,7 @@ export default function DashboardPage() {
         {/* Foto */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/lapakjaru.jpg" // ← simpan gambar ini di public/lapakjaru.jpg
+            src="/lapakjaru.jpeg" // ← simpan gambar ini di public/lapakjaru.jpg
             alt="Taman Hutan Raya Lapak Jaru"
             width={800}
             height={400}
@@ -84,7 +84,7 @@ export default function DashboardPage() {
         {/* Tombol ke Statistik */}
         <div className="text-center mt-8">
           <Link
-            href="/statistics"
+            href="dashboard/statistics"
             className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
           >
             📊 Lihat Statistik
