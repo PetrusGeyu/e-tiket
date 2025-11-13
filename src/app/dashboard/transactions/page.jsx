@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 import TransactionForm from "@/components/TransactionForm";
+import {
+  saveOfflineTransaction,
+  getOfflineTransactions,
+  syncOfflineTransactions,
+} from "@/lib/sync";
 
 export default function TransactionPage() {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [offlineTransactions, setOfflineTransactions] = useState([]);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // 🔹 Ambil semua transaksi
+  // 🔹 Ambil semua transaksi (online/offline)
   const fetchTransactions = async () => {
     try {
       const token = getToken();
@@ -21,14 +26,18 @@ export default function TransactionPage() {
 
       const allTransactions = res.data.data || [];
 
-      // 🔹 Ambil tiket aktif dari cache (kalau ada)
-      const cachedTickets = JSON.parse(localStorage.getItem("tickets_cache")) || [];
+      // Simpan cache transaksi
+      localStorage.setItem("transactions_cache", JSON.stringify(allTransactions));
+
+      // Ambil tiket aktif dari cache (kalau ada)
+      const cachedTickets =
+        JSON.parse(localStorage.getItem("tickets_cache")) || [];
 
       const activeTickets = cachedTickets.filter(
         (t) => t.is_active === 1 || t.is_active === true
       );
 
-      // 🔹 Filter transaksi: tampilkan hanya transaksi tiket aktif (jika ada tiket aktif)
+      // Filter transaksi hanya untuk tiket aktif
       const filteredTransactions =
         activeTickets.length > 0
           ? allTransactions.filter((t) =>
@@ -41,21 +50,46 @@ export default function TransactionPage() {
             )
           : allTransactions;
 
-      setTransactions(filteredTransactions);
+      // Gabungkan dengan data offline
+      const offlineData = getOfflineTransactions();
+      setTransactions([...filteredTransactions, ...offlineData]);
     } catch (err) {
-      console.error("⚠️ Gagal memuat transaksi:", err);
+      console.warn("⚠️ Gagal memuat transaksi dari server, gunakan data lokal.");
+      const cached = JSON.parse(localStorage.getItem("transactions_cache")) || [];
+      const offlineData = getOfflineTransactions();
+      setTransactions([...cached, ...offlineData]);
     }
   };
 
+  // 🔹 Setup awal dan event listener online/offline
   useEffect(() => {
     fetchTransactions();
+
+    // Sinkron otomatis saat online
+    if (navigator.onLine) syncOfflineTransactions();
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      syncOfflineTransactions();
+      fetchTransactions();
+    };
+
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   // 🔹 Simpan transaksi offline
   const handleOfflineSave = (data) => {
-    const updated = [...offlineTransactions, data];
-    setOfflineTransactions(updated);
-    localStorage.setItem("offline_transactions", JSON.stringify(updated));
+    saveOfflineTransaction(data);
+    alert("💾 Transaksi disimpan secara offline. Akan disinkronkan nanti.");
+    fetchTransactions();
   };
 
   // 🔹 Tambah transaksi
@@ -73,6 +107,23 @@ export default function TransactionPage() {
   // 🔹 Hapus transaksi
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus transaksi ini?")) return;
+
+    // Jika offline
+    if (isOffline) {
+      const offlineData = getOfflineTransactions();
+      const updated = offlineData.filter((t) => t.id !== id);
+      localStorage.setItem("offline_transactions", JSON.stringify(updated));
+
+      const cached = JSON.parse(localStorage.getItem("transactions_cache")) || [];
+      const updatedCache = cached.filter((t) => t.id !== id);
+      localStorage.setItem("transactions_cache", JSON.stringify(updatedCache));
+
+      setTransactions([...updatedCache, ...updated]);
+      alert("🗑️ Transaksi dihapus secara offline.");
+      return;
+    }
+
+    // Jika online
     try {
       const token = getToken();
       await api.delete(`/transactions/${id}`, {
@@ -81,7 +132,7 @@ export default function TransactionPage() {
       alert("🗑️ Transaksi berhasil dihapus");
       fetchTransactions();
     } catch (err) {
-      console.error("Gagal menghapus transaksi:", err);
+      console.error("❌ Gagal menghapus transaksi:", err);
       alert("Gagal menghapus transaksi.");
     }
   };
@@ -125,7 +176,13 @@ export default function TransactionPage() {
           🧾 Manajemen Transaksi
         </h1>
 
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          {isOffline && (
+            <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded">
+              ⚠️ Offline Mode
+            </span>
+          )}
+
           {/* Tombol Export */}
           <button
             onClick={handleExportExcel}
@@ -162,7 +219,7 @@ export default function TransactionPage() {
             {transactions.length > 0 ? (
               transactions.map((t, i) => (
                 <tr
-                  key={t.id}
+                  key={t.id || i}
                   className="border-b border-gray-100 hover:bg-gray-50 transition"
                 >
                   <td className="px-4 py-2">{i + 1}</td>
@@ -172,13 +229,13 @@ export default function TransactionPage() {
                   <td className="px-4 py-2 text-center font-semibold text-gray-800">
                     Rp{" "}
                     {Number(
-                      t.total_price ||
-                        t.quantity * t.ticket_price ||
-                        0
+                      t.total_price || t.quantity * (t.ticket_price || 0)
                     ).toLocaleString("id-ID")}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    {new Date(t.visit_date).toLocaleDateString("id-ID")}
+                    {t.visit_date
+                      ? new Date(t.visit_date).toLocaleDateString("id-ID")
+                      : "-"}
                   </td>
                   <td className="px-4 py-2 text-center space-x-2">
                     <button
@@ -188,7 +245,7 @@ export default function TransactionPage() {
                       ✏️ Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => handleDelete(t.id || t.buyer_name)}
                       className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                     >
                       🗑️ Hapus

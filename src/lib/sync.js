@@ -1,72 +1,65 @@
 import api from "./api";
 import { getToken } from "@/utils/auth";
 
-// === TRANSAKSI ===
-export function saveOfflineTransaction(transaction) {
-  const offlineData =
-    JSON.parse(localStorage.getItem("offline_transactions")) || [];
-  offlineData.push(transaction);
-  localStorage.setItem("offline_transactions", JSON.stringify(offlineData));
-}
+// ===== Helper =====
+const getLocal = (key) => JSON.parse(localStorage.getItem(key)) || [];
+const setLocal = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+const clearLocal = (key) => localStorage.removeItem(key);
 
-export function getOfflineTransactions() {
-  return JSON.parse(localStorage.getItem("offline_transactions")) || [];
-}
+// ===== Tickets =====
+export const saveOfflineTicket = (ticket) => {
+  const data = getLocal("offline_tickets");
+  const localTicket = { ...ticket, id: ticket.id || Date.now(), isOffline: true };
+  data.push(localTicket);
+  setLocal("offline_tickets", data);
+  console.log("💾 Tiket disimpan offline:", localTicket);
+};
 
-export function clearOfflineTransactions() {
-  localStorage.removeItem("offline_transactions");
-}
+export const getOfflineTickets = () => getLocal("offline_tickets");
 
-export async function syncOfflineTransactions() {
-  const offlineData = getOfflineTransactions();
-  if (offlineData.length === 0) return;
-  try {
-    const token = getToken();
-    await api.post(
-      "/sync/upload",
-      { transactions: offlineData },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    clearOfflineTransactions();
-    console.log("✅ Transaksi offline berhasil disinkronkan");
-    alert("✅ Data transaksi offline berhasil disinkronkan!");
-  } catch (err) {
-    console.error("❌ Gagal sinkronisasi transaksi:", err);
-  }
-}
-
-// === TIKET ===
-export function saveOfflineTicket(ticket) {
-  const offlineTickets =
-    JSON.parse(localStorage.getItem("offline_tickets")) || [];
-  offlineTickets.push(ticket);
-  localStorage.setItem("offline_tickets", JSON.stringify(offlineTickets));
-  console.log("💾 Tiket disimpan offline:", ticket);
-}
-
-export function getOfflineTickets() {
-  return JSON.parse(localStorage.getItem("offline_tickets")) || [];
-}
-
-export function clearOfflineTickets() {
-  localStorage.removeItem("offline_tickets");
-}
-
-export async function syncOfflineTickets() {
-  const offlineTickets = getOfflineTickets();
-  if (offlineTickets.length === 0) return;
+export const syncOfflineTickets = async () => {
+  const tickets = getOfflineTickets();
+  if (tickets.length === 0) return;
 
   try {
     const token = getToken();
-    for (const t of offlineTickets) {
+    for (const t of tickets) {
       await api.post("/tickets", t, {
         headers: { Authorization: `Bearer ${token}` },
       });
     }
-    clearOfflineTickets();
-    console.log("✅ Tiket offline berhasil disinkronkan");
-    alert("✅ Data tiket offline berhasil disinkronkan!");
+    clearLocal("offline_tickets");
+    alert("✅ Tiket offline berhasil disinkronkan ke server!");
   } catch (err) {
-    console.error("❌ Gagal sinkronisasi tiket:", err);
+    console.warn("⚠️ Gagal sinkron tiket:", err);
   }
-}
+};
+
+// ===== Transactions =====
+export const saveOfflineTransaction = (transaction) => {
+  const data = getLocal("offline_transactions");
+  const localTrx = { ...transaction, id: transaction.id || Date.now(), isOffline: true };
+  data.push(localTrx);
+  setLocal("offline_transactions", data);
+  console.log("💾 Transaksi disimpan offline:", localTrx);
+};
+
+export const getOfflineTransactions = () => getLocal("offline_transactions");
+
+export const syncOfflineTransactions = async () => {
+  const transactions = getOfflineTransactions();
+  if (transactions.length === 0) return;
+
+  try {
+    const token = getToken();
+    for (const trx of transactions) {
+      await api.post("/transactions", trx, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+    clearLocal("offline_transactions");
+    alert("✅ Transaksi offline berhasil disinkronkan ke server!");
+  } catch (err) {
+    console.warn("⚠️ Gagal sinkron transaksi:", err);
+  }
+};

@@ -4,45 +4,87 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 import TicketForm from "@/components/TicketForm";
-import { saveOfflineTicket, syncOfflineTickets } from "@/lib/sync";
+import {
+  saveOfflineTicket,
+  syncOfflineTickets,
+  getOfflineTickets,
+} from "@/lib/sync";
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // 🔹 Ambil semua tiket
+  // 🔹 Ambil semua tiket (online atau offline)
   const fetchTickets = async () => {
     try {
       const token = getToken();
       const res = await api.get("/tickets", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTickets(res.data.data || []);
+      const data = res.data.data || [];
+
+      // simpan cache
+      localStorage.setItem("tickets_cache", JSON.stringify(data));
+      setTickets(data);
     } catch (err) {
       console.warn("⚠️ Tidak bisa ambil tiket dari server, gunakan data lokal.");
-      const localTickets =
-        JSON.parse(localStorage.getItem("offline_tickets")) || [];
-      setTickets(localTickets);
+
+      // ambil dari cache + offline_tickets
+      const cached = JSON.parse(localStorage.getItem("tickets_cache")) || [];
+      const offline = getOfflineTickets();
+      setTickets([...cached, ...offline]);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔹 Setup awal
   useEffect(() => {
     fetchTickets();
 
-    // Sinkronisasi otomatis saat online
+    // sinkron otomatis saat online
     if (navigator.onLine) syncOfflineTickets();
 
-    window.addEventListener("online", syncOfflineTickets);
-    return () => window.removeEventListener("online", syncOfflineTickets);
+    const handleOnline = () => {
+      setIsOffline(false);
+      syncOfflineTickets();
+      fetchTickets();
+    };
+
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
-  // 🔹 Hapus tiket
+  // 🔹 Hapus tiket (offline/online)
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus tiket ini?")) return;
+
+    // Jika offline → hapus dari localStorage
+    if (isOffline) {
+      const offlineData = getOfflineTickets();
+      const updated = offlineData.filter((t) => t.id !== id);
+      localStorage.setItem("offline_tickets", JSON.stringify(updated));
+
+      const cached = JSON.parse(localStorage.getItem("tickets_cache")) || [];
+      const updatedCache = cached.filter((t) => t.id !== id);
+      localStorage.setItem("tickets_cache", JSON.stringify(updatedCache));
+
+      setTickets([...updatedCache, ...updated]);
+      alert("🗑️ Tiket dihapus secara offline.");
+      return;
+    }
+
+    // Jika online → hapus dari server
     try {
       const token = getToken();
       await api.delete(`/tickets/${id}`, {
@@ -51,7 +93,7 @@ export default function TicketsPage() {
       alert("🗑️ Tiket berhasil dihapus");
       fetchTickets();
     } catch (err) {
-      alert("❌ Gagal menghapus tiket (mungkin offline)");
+      alert("❌ Gagal menghapus tiket dari server. Data tetap di lokal.");
     }
   };
 
@@ -59,6 +101,7 @@ export default function TicketsPage() {
   const handleOfflineSave = (ticket) => {
     saveOfflineTicket(ticket);
     alert("💾 Tiket disimpan secara offline. Akan disinkronkan otomatis nanti.");
+    fetchTickets();
   };
 
   return (
@@ -68,16 +111,25 @@ export default function TicketsPage() {
         <h1 className="text-2xl font-bold text-green-700 flex items-center gap-2">
           🎟️ Manajemen Tiket
         </h1>
-        <button
-          onClick={() => {
-            setSelectedTicket(null);
-            setShowForm(true);
-          }}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow"
-        >
-          + Tambah Tiket
-        </button>
+
+        <div className="flex items-center gap-3">
+          {isOffline && (
+            <span className="bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded">
+              ⚠️ Offline Mode
+            </span>
+          )}
+          <button
+            onClick={() => {
+              setSelectedTicket(null);
+              setShowForm(true);
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow"
+          >
+            + Tambah Tiket
+          </button>
+        </div>
       </div>
+
       {/* Tabel */}
       <div className="overflow-x-auto bg-white shadow rounded-lg border border-gray-100">
         {loading ? (
@@ -101,7 +153,9 @@ export default function TicketsPage() {
                 >
                   <td className="px-4 py-2">{i + 1}</td>
                   <td className="px-4 py-2">{t.name}</td>
-                  <td className="px-4 py-2">Rp {t.price}</td>
+                  <td className="px-4 py-2">
+                    Rp {Number(t.price).toLocaleString("id-ID")}
+                  </td>
                   <td className="px-4 py-2 text-center">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded ${
@@ -124,7 +178,7 @@ export default function TicketsPage() {
                       ✏️ Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => handleDelete(t.id || t.name)}
                       className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                     >
                       🗑️ Hapus
