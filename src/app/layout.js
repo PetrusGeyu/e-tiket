@@ -5,14 +5,15 @@ import "./globals.css";
 import InstallPWAButton from "@/components/InstallPWAButton";
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/service-worker.js")
-        .then(() => console.log("✅ Service Worker aktif"))
-        .catch((err) => console.error("❌ Gagal mendaftar SW:", err));
-    }
-  }, []);
+ useEffect(() => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then(() => console.log("✅ Service Worker aktif"))
+      .catch((err) => console.error("❌ Gagal mendaftar SW:", err));
+  }
+}, []);
+
 
   return (
     <html lang="id">
