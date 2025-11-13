@@ -83,15 +83,12 @@
       <button type="submit">💾 Simpan Offline</button>
     </form>
 
-    <p>
-      Data akan otomatis dikirim ke server saat kamu online kembali.
-    </p>
+    <p>Data akan otomatis dikirim ke server saat kamu online kembali.</p>
 
     <script>
-      const API_URL = "https://lapakjarubackend.xyz";
       const TOKEN_KEY = "fenya_token";
 
-      // ✅ Simpan data offline
+      // Simpan offline sama seperti sebelumnya
       const form = document.getElementById("offlineForm");
       form.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -104,7 +101,6 @@
           created_at: new Date().toISOString(),
         };
 
-        // Tambahkan ke localStorage
         let transactions =
           JSON.parse(localStorage.getItem("offlineTransactions")) || [];
         transactions.push(data);
@@ -117,7 +113,7 @@
         form.reset();
       });
 
-      // ✅ Saat online → kirim data ke server Laravel
+      // Kirim saat online via proxy
       window.addEventListener("online", async () => {
         const offlineData =
           JSON.parse(localStorage.getItem("offlineTransactions")) || [];
@@ -132,7 +128,7 @@
 
           for (const trx of offlineData) {
             try {
-              const res = await fetch(`${API_URL}/transactions`, {
+              const res = await fetch("/api/transactions", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -152,9 +148,8 @@
             }
           }
 
-          // Hapus data offline setelah sukses dikirim
           localStorage.removeItem("offlineTransactions");
-          alert("✅ Semua transaksi offline berhasil dikirim ke server!");
+          alert("✅ Semua transaksi offline berhasil dikirim!");
         }
       });
     </script>
