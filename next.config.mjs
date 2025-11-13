@@ -1,19 +1,20 @@
-import withPWA from "next-pwa";
-
 /** @type {import('next').NextConfig} */
-const nextConfig = withPWA({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
+const nextConfig = {
+  // Konfigurasi utama
+  reactStrictMode: true,
+
+  // Jika kamu masih pakai rewrites ke backend lokal / deploy:
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: process.env.NEXT_PUBLIC_API_URL
-          ? `${process.env.NEXT_PUBLIC_API_URL}/:path*`
-          : "http://localhost:8000/api/:path*",
+        destination: "https://lapakjarubackend.xyz/api/:path*", // ganti sesuai backend kamu
       },
     ];
   },
-});
+
+  // Tambahkan ini agar Next.js 16 paham kita pakai Turbopack
+  turbopack: {},
+};
 
 export default nextConfig;
