@@ -11,65 +11,65 @@ export default function TransactionForm({
   onOfflineSave,
 }) {
   const [form, setForm] = useState({
-    ticket_id: "",
+    ticket_name: "",
+    price_ticket: "",
     buyer_name: "",
     quantity: "",
-    status: "pending",
   });
-  const [tickets, setTickets] = useState([]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Ambil daftar tiket
-  useEffect(() => {
-    const token = getToken();
-    api
-      .get("/tickets", { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setTickets(res.data.data))
-      .catch(() => console.error("⚠️ Gagal memuat daftar tiket"));
-  }, []);
 
-  // 🔹 Isi form jika edit transaksi
+
+  // 🔹 Isi form saat edit
   useEffect(() => {
     if (transaction) {
       setForm({
-        ticket_id:
-          transaction.ticket_id ||
-          tickets.find((t) => t.name === transaction.ticket_name)?.id ||
-          "",
+        ticket_name: transaction.ticket_name || "",
+        price_ticket: transaction.price_ticket || "",
         buyer_name: transaction.buyer_name || "",
         quantity: transaction.quantity || "",
-        status: transaction.status || "pending",
       });
     } else {
       setForm({
-        ticket_id: "",
+        ticket_name: "",
+        price_ticket: "",
         buyer_name: "",
         quantity: "",
-        status: "pending",
       });
     }
-  }, [transaction, tickets]);
+  }, [transaction]);
 
-  // 🔹 Input handler
+  // 🔹 Ganti input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Submit handler
+ 
+
+  // 🔹 Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!form.ticket_id || !form.buyer_name || !form.quantity) {
+    if (
+      !form.ticket_name ||
+      !form.price_ticket ||
+      !form.buyer_name ||
+      !form.quantity
+    ) {
       setError("Semua field wajib diisi.");
       return;
     }
 
     console.log("📦 Data dikirim:", form);
     setLoading(true);
-    const token = getToken();
+
+    
+    const token = localStorage.getItem("fenya_token");
 
     try {
       if (!navigator.onLine) {
@@ -124,22 +124,29 @@ export default function TransactionForm({
           </div>
         )}
 
-        {/* Tiket */}
+        {/* Nama Tiket */}
         <label className="block mb-2">
-          <span className="text-sm font-medium">Pilih Tiket</span>
-          <select
-            name="ticket_id"
-            value={form.ticket_id}
+          <span className="text-sm font-medium">Nama Tiket</span>
+          <input
+            type="text"
+            name="ticket_name"
+            value={form.ticket_name}
             onChange={handleChange}
+            placeholder="Masukkan nama tiket"
             className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
-          >
-            <option value="">-- Pilih Tiket --</option>
-            {tickets.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} - Rp {t.price}
-              </option>
-            ))}
-          </select>
+          />
+        </label>
+
+        {/* Harga */}
+        <label className="block mb-2">
+          <span className="text-sm font-medium">Harga Tiket</span>
+          <input
+            type="number"
+            name="price_ticket"
+            value={form.price_ticket}
+            onChange={handleChange}
+            className="mt-1 block w-full border rounded px-3 py-2 bg-gray-100"
+          />
         </label>
 
         {/* Nama Pembeli */}
@@ -155,7 +162,7 @@ export default function TransactionForm({
         </label>
 
         {/* Jumlah */}
-        <label className="block mb-2">
+        <label className="block mb-4">
           <span className="text-sm font-medium">Jumlah Tiket</span>
           <input
             type="number"
@@ -165,21 +172,6 @@ export default function TransactionForm({
             min="1"
             className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
           />
-        </label>
-
-        {/* Status */}
-        <label className="block mb-4">
-          <span className="text-sm font-medium">Status</span>
-          <select
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2"
-          >
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
         </label>
 
         {/* Tombol aksi */}

@@ -24,11 +24,6 @@ export default function Sidebar() {
       icon: <LayoutDashboard size={18} />,
     },
     {
-      name: "Tiket",
-      href: "/dashboard/tickets",
-      icon: <Ticket size={18} />,
-    },
-    {
       name: "Statistik",
       href: "/dashboard/statistics",
       icon: <FileBarChart2 size={18} />,
