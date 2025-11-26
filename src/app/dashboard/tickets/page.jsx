@@ -25,17 +25,9 @@ export default function TicketsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data.data || [];
-
-      // simpan cache
-      localStorage.setItem("tickets_cache", JSON.stringify(data));
       setTickets(data);
     } catch (err) {
       console.warn("⚠️ Tidak bisa ambil tiket dari server, gunakan data lokal.");
-
-      // ambil dari cache + offline_tickets
-      const cached = JSON.parse(localStorage.getItem("tickets_cache")) || [];
-      const offline = getOfflineTickets();
-      setTickets([...cached, ...offline]);
     } finally {
       setLoading(false);
     }
