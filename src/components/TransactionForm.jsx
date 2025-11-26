@@ -7,7 +7,7 @@ import { getToken } from "@/utils/auth";
 export default function TransactionForm({ transaction, onClose, onSaved }) {
   const [form, setForm] = useState({
     ticket_name: "",
-    price_ticket: "",
+    ticket_price: "",
     buyer_name: "",
     quantity: "",
   });
@@ -15,57 +15,42 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Isi form saat EDIT
   useEffect(() => {
     if (transaction) {
       setForm({
         ticket_name: transaction.ticket_name || "",
-        price_ticket: String(transaction.price_ticket || ""),  // FIX
+        ticket_price: String(transaction.ticket_price || ""),
         buyer_name: transaction.buyer_name || "",
-        quantity: String(transaction.quantity || ""),          // FIX
-      });
-    } else {
-      setForm({
-        ticket_name: "",
-        price_ticket: "",
-        buyer_name: "",
-        quantity: "",
+        quantity: String(transaction.quantity || ""),
       });
     }
   }, [transaction]);
 
-  // 🔹 Handle input
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (
-      !form.ticket_name ||
-      !form.price_ticket ||
-      !form.buyer_name ||
-      !form.quantity
-    ) {
+    if (!form.ticket_name || !form.ticket_price || !form.buyer_name || !form.quantity) {
       setError("Semua field wajib diisi.");
       return;
     }
 
-    setLoading(true);
-    const token = getToken();
-
-    // 🔥 FIX: convert number sebelum dikirim agar backend aman
     const payload = {
-      ...form,
-      price_ticket: Number(form.price_ticket),
+      ticket_name: form.ticket_name,
+      ticket_price: Number(form.ticket_price),
+      buyer_name: form.buyer_name,
       quantity: Number(form.quantity),
     };
 
+    setLoading(true);
+
     try {
+      const token = getToken();
+
       if (transaction) {
         await api.put(`/transactions/${transaction.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
@@ -79,102 +64,68 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
       onSaved?.();
       onClose();
     } catch (err) {
-      console.error("❌ ERROR:", err);
-      setError(
-        err?.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan transaksi."
-      );
+      setError(err.response?.data?.message || "Terjadi kesalahan saat menyimpan.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🧱 UI
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white w-full max-w-md p-6 rounded-lg shadow"
-      >
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded w-full max-w-md shadow">
         <h2 className="text-xl font-bold mb-4 text-green-700 text-center">
           {transaction ? "✏️ Edit Transaksi" : "➕ Tambah Transaksi"}
         </h2>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 px-3 py-2 mb-3 rounded">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 text-red-700 p-2 mb-3 rounded">{error}</div>}
 
-        {/* Nama Tiket */}
-        <label className="block mb-2">
-          <span className="text-sm font-medium">Nama Tiket</span>
+        <label className="block mb-3">
+          <span>Nama Tiket</span>
           <input
-            type="text"
             name="ticket_name"
             value={form.ticket_name}
             onChange={handleChange}
-            placeholder="Masukkan nama tiket"
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="w-full border rounded p-2"
           />
         </label>
 
-        {/* Harga Tiket */}
-        <label className="block mb-2">
-          <span className="text-sm font-medium">Harga Tiket</span>
+        <label className="block mb-3">
+          <span>Harga Tiket</span>
           <input
             type="number"
-            name="price_ticket"
-            value={form.price_ticket}
+            name="ticket_price"
+            value={form.ticket_price}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2"
+            className="w-full border rounded p-2"
           />
         </label>
 
-        {/* Nama Pembeli */}
-        <label className="block mb-2">
-          <span className="text-sm font-medium">Nama Pembeli</span>
+        <label className="block mb-3">
+          <span>Nama Pembeli</span>
           <input
-            type="text"
             name="buyer_name"
             value={form.buyer_name}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="w-full border rounded p-2"
           />
         </label>
 
-        {/* Jumlah Tiket */}
         <label className="block mb-4">
-          <span className="text-sm font-medium">Jumlah Tiket</span>
+          <span>Jumlah Tiket</span>
           <input
             type="number"
             name="quantity"
             value={form.quantity}
             onChange={handleChange}
-            min="1"
-            className="mt-1 block w-full border rounded px-3 py-2 focus:ring-2 focus:ring-green-400"
+            className="w-full border rounded p-2"
           />
         </label>
 
-        {/* Tombol */}
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-          >
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
             Batal
           </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`px-4 py-2 text-white rounded ${
-              loading
-                ? "bg-green-300 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
+          <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">
             {loading ? "Menyimpan..." : "Simpan"}
           </button>
         </div>
