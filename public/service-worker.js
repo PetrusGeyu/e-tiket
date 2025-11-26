@@ -25,26 +25,30 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // 🛑 Skip semua request POST, PUT, PATCH, DELETE
+  if (event.request.method !== "GET") return;
+
+  // 🔹 Untuk navigasi (SPA routes)
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(OFFLINE_URL) // ⛔ Jika gagal fetch → tampilkan offline.html
-      )
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
     );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((res) => {
-        return (
-          res ||
-          fetch(event.request)
-            .then((response) => {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-              return response;
-            })
-            .catch(() => caches.match(OFFLINE_URL))
-        );
-      })
-    );
+    return;
   }
+
+  // 🔹 Untuk file lain (CSS, JS, Images)
+  event.respondWith(
+    caches.match(event.request).then((cacheRes) => {
+      return (
+        cacheRes ||
+        fetch(event.request)
+          .then((networkRes) => {
+            const clone = networkRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            return networkRes;
+          })
+          .catch(() => caches.match(OFFLINE_URL))
+      );
+    })
+  );
 });
