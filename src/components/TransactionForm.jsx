@@ -7,7 +7,7 @@ import { getToken } from "@/utils/auth";
 export default function TransactionForm({ transaction, onClose, onSaved }) {
   const [form, setForm] = useState({
     ticket_name: "",
-    ticket_price: "",
+    price_ticket: "",
     buyer_name: "",
     quantity: "",
   });
@@ -19,7 +19,7 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
     if (transaction) {
       setForm({
         ticket_name: transaction.ticket_name || "",
-        ticket_price: String(transaction.ticket_price || ""),
+        price_ticket: String(transaction.price_ticket || ""),
         buyer_name: transaction.buyer_name || "",
         quantity: String(transaction.quantity || ""),
       });
@@ -34,14 +34,14 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
     e.preventDefault();
     setError("");
 
-    if (!form.ticket_name || !form.ticket_price || !form.buyer_name || !form.quantity) {
+    if (!form.ticket_name || !form.price_ticket || !form.buyer_name || !form.quantity) {
       setError("Semua field wajib diisi.");
       return;
     }
 
     const payload = {
       ticket_name: form.ticket_name,
-      ticket_price: Number(form.ticket_price),
+      price_ticket: Number(form.price_ticket),
       buyer_name: form.buyer_name,
       quantity: Number(form.quantity),
     };
@@ -93,8 +93,8 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
           <span>Harga Tiket</span>
           <input
             type="number"
-            name="ticket_price"
-            value={form.ticket_price}
+            name="price_ticket"
+            value={form.price_ticket}
             onChange={handleChange}
             className="w-full border rounded p-2"
           />
