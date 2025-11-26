@@ -27,12 +27,12 @@ export default function LoginPage() {
 
       // Laravel mengembalikan { message, user, token }
       const token = res.data.token;
-      const user = res.data.user;
+      
 
       if (!token) throw new Error("Token tidak ditemukan di response");
 
       saveToken(token);
-      localStorage.setItem("fenya_user", JSON.stringify(user));
+      
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       router.push("/dashboard");

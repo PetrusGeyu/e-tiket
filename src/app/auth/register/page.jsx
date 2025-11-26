@@ -55,12 +55,12 @@ export default function RegisterPage() {
       const res = await api.post("/register", form);
 
       const token = res.data.token;
-      const user = res.data.data;
+      
 
       if (!token) throw new Error("Token tidak ditemukan di response");
 
       saveToken(token);
-      localStorage.setItem("fenya_user", JSON.stringify(user));
+    
 
       // Redirect ke dashboard setelah register sukses
       router.push("/dashboard");
