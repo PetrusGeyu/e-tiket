@@ -26,6 +26,16 @@ export default function TransactionPage() {
 
       const allTransactions = res.data.data || [];
 
+      // Simpan cache transaksi
+      localStorage.setItem("transactions_cache", JSON.stringify(allTransactions));
+
+      // Ambil tiket aktif dari cache (kalau ada)
+      const cachedTickets =
+        JSON.parse(localStorage.getItem("tickets_cache")) || [];
+
+      const activeTickets = cachedTickets.filter(
+        (t) => t.is_active === 1 || t.is_active === true
+      );
 
       // Filter transaksi hanya untuk tiket aktif
       const filteredTransactions =
@@ -40,7 +50,9 @@ export default function TransactionPage() {
             )
           : allTransactions;
 
-  
+      // Gabungkan dengan data offline
+      const offlineData = getOfflineTransactions();
+      setTransactions([...filteredTransactions, ...offlineData]);
     } catch (err) {
       console.warn("⚠️ Gagal memuat transaksi dari server, gunakan data lokal.");
       const cached = JSON.parse(localStorage.getItem("transactions_cache")) || [];
@@ -62,8 +74,23 @@ export default function TransactionPage() {
       fetchTransactions();
     };
 
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
+  // 🔹 Simpan transaksi offline
+  const handleOfflineSave = (data) => {
+    saveOfflineTransaction(data);
+    alert("💾 Transaksi disimpan secara offline. Akan disinkronkan nanti.");
+    fetchTransactions();
+  };
 
   // 🔹 Tambah transaksi
   const handleAdd = () => {
@@ -81,7 +108,20 @@ export default function TransactionPage() {
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus transaksi ini?")) return;
 
+    // Jika offline
+    if (isOffline) {
+      const offlineData = getOfflineTransactions();
+      const updated = offlineData.filter((t) => t.id !== id);
+      localStorage.setItem("offline_transactions", JSON.stringify(updated));
 
+      const cached = JSON.parse(localStorage.getItem("transactions_cache")) || [];
+      const updatedCache = cached.filter((t) => t.id !== id);
+      localStorage.setItem("transactions_cache", JSON.stringify(updatedCache));
+
+      setTransactions([...updatedCache, ...updated]);
+      alert("🗑️ Transaksi dihapus secara offline.");
+      return;
+    }
 
     // Jika online
     try {
