@@ -87,6 +87,7 @@ export default function TransactionPage() {
       console.error(err);
       alert("Gagal menghapus cache.");
     };
+  };
 
     // Export ke Excel (online)
     const handleExportExcel = async () => {
@@ -239,4 +240,4 @@ export default function TransactionPage() {
       </div>
     );
   }
-}
+
