@@ -15,14 +15,14 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Isi form saat edit
+  // 🔹 Isi form saat EDIT
   useEffect(() => {
     if (transaction) {
       setForm({
         ticket_name: transaction.ticket_name || "",
-        price_ticket: transaction.price_ticket || "",
+        price_ticket: String(transaction.price_ticket || ""),  // FIX
         buyer_name: transaction.buyer_name || "",
-        quantity: transaction.quantity || "",
+        quantity: String(transaction.quantity || ""),          // FIX
       });
     } else {
       setForm({
@@ -40,7 +40,7 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Submit form (ONLINE ONLY)
+  // 🔹 Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -55,18 +55,23 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
       return;
     }
 
-    console.log("📦 Data dikirim:", form);
     setLoading(true);
-
     const token = getToken();
+
+    // 🔥 FIX: convert number sebelum dikirim agar backend aman
+    const payload = {
+      ...form,
+      price_ticket: Number(form.price_ticket),
+      quantity: Number(form.quantity),
+    };
 
     try {
       if (transaction) {
-        await api.put(`/transactions/${transaction.id}`, form, {
+        await api.put(`/transactions/${transaction.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await api.post("/transactions", form, {
+        await api.post("/transactions", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -74,7 +79,7 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
       onSaved?.();
       onClose();
     } catch (err) {
-      console.error("❌ Gagal menyimpan transaksi:", err);
+      console.error("❌ ERROR:", err);
       setError(
         err?.response?.data?.message ||
           "Terjadi kesalahan saat menyimpan transaksi."
@@ -122,7 +127,7 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
             name="price_ticket"
             value={form.price_ticket}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 bg-gray-100"
+            className="mt-1 block w-full border rounded px-3 py-2"
           />
         </label>
 
@@ -151,7 +156,7 @@ export default function TransactionForm({ transaction, onClose, onSaved }) {
           />
         </label>
 
-        {/* Tombol aksi */}
+        {/* Tombol */}
         <div className="flex justify-end space-x-3">
           <button
             type="button"
