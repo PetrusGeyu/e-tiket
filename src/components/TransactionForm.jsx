@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { getToken } from "@/utils/auth";
 
-export default function TransactionForm({
-  transaction,
-  onClose,
-  onSaved,
-  onOfflineSave,
-}) {
+export default function TransactionForm({ transaction, onClose, onSaved }) {
   const [form, setForm] = useState({
     ticket_name: "",
     price_ticket: "",
@@ -17,11 +12,8 @@ export default function TransactionForm({
     quantity: "",
   });
 
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-
 
   // 🔹 Isi form saat edit
   useEffect(() => {
@@ -42,15 +34,13 @@ export default function TransactionForm({
     }
   }, [transaction]);
 
-  // 🔹 Ganti input
+  // 🔹 Handle input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
- 
-
-  // 🔹 Submit form
+  // 🔹 Submit form (ONLINE ONLY)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -68,17 +58,9 @@ export default function TransactionForm({
     console.log("📦 Data dikirim:", form);
     setLoading(true);
 
-    
-    const token = localStorage.getItem("fenya_token");
+    const token = getToken();
 
     try {
-      if (!navigator.onLine) {
-        onOfflineSave?.(form);
-        alert("💾 Tidak ada koneksi. Transaksi disimpan offline.");
-        onClose();
-        return;
-      }
-
       if (transaction) {
         await api.put(`/transactions/${transaction.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
@@ -93,15 +75,10 @@ export default function TransactionForm({
       onClose();
     } catch (err) {
       console.error("❌ Gagal menyimpan transaksi:", err);
-      if (!navigator.onLine) {
-        onOfflineSave?.(form);
-        alert("⚠️ Koneksi terputus. Data disimpan offline.");
-      } else {
-        setError(
-          err?.response?.data?.message ||
-            "Terjadi kesalahan saat menyimpan transaksi."
-        );
-      }
+      setError(
+        err?.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan transaksi."
+      );
     } finally {
       setLoading(false);
     }
@@ -137,7 +114,7 @@ export default function TransactionForm({
           />
         </label>
 
-        {/* Harga */}
+        {/* Harga Tiket */}
         <label className="block mb-2">
           <span className="text-sm font-medium">Harga Tiket</span>
           <input
@@ -161,7 +138,7 @@ export default function TransactionForm({
           />
         </label>
 
-        {/* Jumlah */}
+        {/* Jumlah Tiket */}
         <label className="block mb-4">
           <span className="text-sm font-medium">Jumlah Tiket</span>
           <input
@@ -183,6 +160,7 @@ export default function TransactionForm({
           >
             Batal
           </button>
+
           <button
             type="submit"
             disabled={loading}
