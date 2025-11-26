@@ -117,6 +117,13 @@ export default function TransactionPage() {
           >
             + Tambah Transaksi
           </button>
+
+          <button
+            onClick={fetchTransactions}
+            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg shadow"
+          >
+            🔄 Refresh Data
+          </button>
         </div>
       </div>
 
