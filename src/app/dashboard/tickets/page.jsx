@@ -41,30 +41,7 @@ export default function TicketsPage() {
     }
   };
 
-  // 🔹 Setup awal
-  useEffect(() => {
-    fetchTickets();
-
-    // sinkron otomatis saat online
-    if (navigator.onLine) syncOfflineTickets();
-
-    const handleOnline = () => {
-      setIsOffline(false);
-      syncOfflineTickets();
-      fetchTickets();
-    };
-
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
+  
   // 🔹 Hapus tiket (offline/online)
   const handleDelete = async (id) => {
     if (!confirm("Yakin ingin menghapus tiket ini?")) return;
@@ -97,12 +74,7 @@ export default function TicketsPage() {
     }
   };
 
-  // 🔹 Simpan offline
-  const handleOfflineSave = (ticket) => {
-    saveOfflineTicket(ticket);
-    alert("💾 Tiket disimpan secara offline. Akan disinkronkan otomatis nanti.");
-    fetchTickets();
-  };
+  
 
   return (
     <div className="p-6">
