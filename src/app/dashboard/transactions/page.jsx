@@ -63,152 +63,180 @@ export default function TransactionPage() {
     }
   };
 
-  // Export ke Excel (online)
-  const handleExportExcel = async () => {
+  const clearCache = async () => {
     try {
-      const token = getToken();
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
+      // Hapus Cache Storage
+      if ('caches' in window) {
+        const names = await caches.keys();
+        for (let name of names) {
+          await caches.delete(name);
+        }
+      }
 
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Unregister semua service worker
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) {
+          await reg.unregister();
+        }
+      }
 
-      if (!response.ok) throw new Error("Gagal mengekspor data.");
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `data_transaksi_${new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:T]/g, "-")}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
+      alert("Cache dibersihkan! Reloading...");
+      window.location.reload(true);
     } catch (err) {
       console.error(err);
-      alert("❌ Terjadi kesalahan saat export Excel");
-    }
-  };
+      alert("Gagal menghapus cache.");
+    };
 
-  return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-green-700">🧾 Manajemen Transaksi</h1>
+    // Export ke Excel (online)
+    const handleExportExcel = async () => {
+      try {
+        const token = getToken();
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/transactions/export/excel`;
 
-        <div className="flex items-center gap-3">
-          {/* Tombol Export */}
-          <button
-            onClick={handleExportExcel}
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow flex items-center gap-2"
-            disabled={loading}
-          >
-            📊 Export Excel
-          </button>
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-          {/* Tombol Tambah */}
-          <button
-            onClick={handleAdd}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
-          >
-            + Tambah Transaksi
-          </button>
+        if (!response.ok) throw new Error("Gagal mengekspor data.");
 
-          <button
-            onClick={fetchTransactions}
-            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg shadow"
-          >
-            🔄 Refresh Data
-          </button>
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `data_transaksi_${new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/[:T]/g, "-")}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error(err);
+        alert("❌ Terjadi kesalahan saat export Excel");
+      }
+    };
+
+
+
+    return (
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-green-700">🧾 Manajemen Transaksi</h1>
+
+          <div className="flex items-center gap-3">
+            {/* Tombol Export */}
+            <button
+              onClick={handleExportExcel}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow flex items-center gap-2"
+              disabled={loading}
+            >
+              📊 Export Excel
+            </button>
+
+            {/* Tombol Tambah */}
+            <button
+              onClick={handleAdd}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
+            >
+              + Tambah Transaksi
+            </button>
+
+            <button
+              onClick={clearCache}
+              className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg shadow"
+            >
+              🔄 Refresh Data
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Tabel Transaksi */}
-      <div className="overflow-x-auto bg-white shadow rounded-lg border border-gray-100">
-        <table className="w-full border-collapse text-sm">
-          <thead className="bg-green-600 text-white">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium">#</th>
-              <th className="px-4 py-2 text-left font-medium">Nama Pembeli</th>
-              <th className="px-4 py-2 text-left font-medium">Nama Tiket</th>
-              <th className="px-4 py-2 text-left font-medium">Harga Tiket</th>
-              <th className="px-4 py-2 text-center font-medium">Jumlah</th>
-              <th className="px-4 py-2 text-center font-medium">Total</th>
-              <th className="px-4 py-2 text-center font-medium">Tanggal</th>
-              <th className="px-4 py-2 text-center font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        {/* Tabel Transaksi */}
+        <div className="overflow-x-auto bg-white shadow rounded-lg border border-gray-100">
+          <table className="w-full border-collapse text-sm">
+            <thead className="bg-green-600 text-white">
               <tr>
-                <td colSpan="8" className="text-center py-6 text-gray-500 italic">
-                  Memuat transaksi...
-                </td>
+                <th className="px-4 py-2 text-left font-medium">#</th>
+                <th className="px-4 py-2 text-left font-medium">Nama Pembeli</th>
+                <th className="px-4 py-2 text-left font-medium">Nama Tiket</th>
+                <th className="px-4 py-2 text-left font-medium">Harga Tiket</th>
+                <th className="px-4 py-2 text-center font-medium">Jumlah</th>
+                <th className="px-4 py-2 text-center font-medium">Total</th>
+                <th className="px-4 py-2 text-center font-medium">Tanggal</th>
+                <th className="px-4 py-2 text-center font-medium">Aksi</th>
               </tr>
-            ) : transactions.length > 0 ? (
-              transactions.map((t, i) => (
-                <tr
-                  key={t.id || i}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition"
-                >
-                  <td className="px-4 py-2">{i + 1}</td>
-                  <td className="px-4 py-2">{t.buyer_name}</td>
-                  <td className="px-4 py-2">{t.ticket_name}</td>
-                  <td className="px-4 py-2 text-center font-semibold text-gray-800">
-                    Rp{" "}
-                    {Number(t.ticket_price ?? (t.total_price / (t.quantity || 1) || 0)).toLocaleString(
-                      "id-ID"
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-center">{t.quantity}</td>
-                  <td className="px-4 py-2 text-center font-semibold">
-                    Rp {Number(t.total_price ?? (t.quantity * (t.ticket_price || 0))).toLocaleString("id-ID")}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    {t.visit_date ? new Date(t.visit_date).toLocaleDateString("id-ID") : "-"}
-                  </td>
-                  <td className="px-4 py-2 text-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(t)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(t.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      🗑️ Hapus
-                    </button>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-6 text-gray-500 italic">
+                    Memuat transaksi...
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" className="text-center py-6 text-gray-500 italic">
-                  Tidak ada transaksi.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : transactions.length > 0 ? (
+                transactions.map((t, i) => (
+                  <tr
+                    key={t.id || i}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-4 py-2">{i + 1}</td>
+                    <td className="px-4 py-2">{t.buyer_name}</td>
+                    <td className="px-4 py-2">{t.ticket_name}</td>
+                    <td className="px-4 py-2 text-center font-semibold text-gray-800">
+                      Rp{" "}
+                      {Number(t.ticket_price ?? (t.total_price / (t.quantity || 1) || 0)).toLocaleString(
+                        "id-ID"
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-center">{t.quantity}</td>
+                    <td className="px-4 py-2 text-center font-semibold">
+                      Rp {Number(t.total_price ?? (t.quantity * (t.ticket_price || 0))).toLocaleString("id-ID")}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {t.visit_date ? new Date(t.visit_date).toLocaleDateString("id-ID") : "-"}
+                    </td>
+                    <td className="px-4 py-2 text-center space-x-2">
+                      <button
+                        onClick={() => handleEdit(t)}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        🗑️ Hapus
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="text-center py-6 text-gray-500 italic">
+                    Tidak ada transaksi.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Modal form transaksi */}
-      {showForm && (
-        <TransactionForm
-          transaction={selectedTransaction}
-          onClose={() => setShowForm(false)}
-          onSaved={() => {
-            setShowForm(false);
-            fetchTransactions();
-          }}
-        />
-      )}
-    </div>
-  );
+        {/* Modal form transaksi */}
+        {showForm && (
+          <TransactionForm
+            transaction={selectedTransaction}
+            onClose={() => setShowForm(false)}
+            onSaved={() => {
+              setShowForm(false);
+              fetchTransactions();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 }
