@@ -208,7 +208,8 @@ export default function TransactionPage() {
             <tr>
               <th className="px-4 py-2 text-left font-medium">#</th>
               <th className="px-4 py-2 text-left font-medium">Nama Pembeli</th>
-              <th className="px-4 py-2 text-left font-medium">Tiket</th>
+              <th className="px-4 py-2 text-left font-medium">Nama Tiket</th>
+              <th className="px-4 py-2 text-left font-medium">Harga Tiket</th>
               <th className="px-4 py-2 text-center font-medium">Jumlah</th>
               <th className="px-4 py-2 text-center font-medium">Total</th>
               <th className="px-4 py-2 text-center font-medium">Tanggal</th>
@@ -225,13 +226,14 @@ export default function TransactionPage() {
                   <td className="px-4 py-2">{i + 1}</td>
                   <td className="px-4 py-2">{t.buyer_name}</td>
                   <td className="px-4 py-2">{t.ticket_name}</td>
-                  <td className="px-4 py-2 text-center">{t.quantity}</td>
                   <td className="px-4 py-2 text-center font-semibold text-gray-800">
                     Rp{" "}
                     {Number(
                       t.total_price || t.quantity * (t.ticket_price || 0)
                     ).toLocaleString("id-ID")}
                   </td>
+                  <td className="px-4 py-2 text-center">{t.quantity}</td>
+                  <td className="px-4 py-2 text-center">{t.total_price}</td>
                   <td className="px-4 py-2 text-center">
                     {t.visit_date
                       ? new Date(t.visit_date).toLocaleDateString("id-ID")
